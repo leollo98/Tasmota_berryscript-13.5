@@ -1,0 +1,24 @@
+rule1
+    on Power1#Boot do CT 326 endon
+    on Time#Initialized do backlog event updateTime endon
+    on Time#Minute do backlog event updateTime endon
+    on Power1#State=1 do backlog event updateTime endon
+    on event#updateTime do backlog event myCT=%time%; event myHSB=%time%; event myAlarm=%time% endon
+    on event#myCT<=180 do backlog scale1 %time%,0,90,326,500; scale2 %time%,90,180,80,40; event updateCT BREAK
+    on event#myCT<=300 do backlog VAR1 500; VAR2 40; event updateCT BREAK
+    on event#myCT<=360 do backlog scale1 %time%,300,360,500,326; scale2 %time%,300,360,40,80; event updateCT BREAK
+    on event#myCT<1200 do backlog VAR1 250; VAR2 80; event updateCT endon
+    on event#myCT>1200 do backlog VAR1 326; VAR2 80; event updateCT endon
+    on event#myHSB<=120 do backlog scale3 %time%,0,120,240,35; event updateHSB endon
+    on event#myHSB>575 do backlog VAR3 240; event updateHSB endon
+    on event#myAlarm>576 do backlog Rule3 1 Break
+    on event#myAlarm>555 do backlog Rule3 0; VAR3 38; scale1 %time%,555,575,0,100; Dimmer1 %Var1%; event updateHSB Break
+    on event#updateCT do backlog CT %var1%;Dimmer2 %Var2% endon
+    on event#updateHSB do backlog HSBColor %var3% 100 100 endon
+rule1 1
+
+Rule3
+    on analog#A2>2500 do backlog power0 1 endon
+    on analog#A2<2500 do backlog power0 0 endon
+
+Rule3 1
