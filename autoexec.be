@@ -1,3 +1,16 @@
+import math
+import string
+
+var controlLock = true
+
+var r = 255
+var g = 255
+var b = 255
+var cold = 255
+var warm = 255
+var dimmer = 255
+var HEUDimmer =255
+
 def scale(value, fromLow, fromHigh, toLow, toHigh)
     return (value - fromLow) * (toHigh - toLow) / (fromHigh - fromLow) + toLow
 end
