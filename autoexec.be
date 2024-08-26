@@ -1,5 +1,6 @@
 import math
 import string
+import json
 
 var controlLock = true
 
@@ -10,6 +11,7 @@ var cold = 255
 var warm = 255
 var dimmer = 255
 var HEUDimmer =255
+var times = 0
 
 def scale(value, fromLow, fromHigh, toLow, toHigh)
     return (value - fromLow) * (toHigh - toLow) / (fromHigh - fromLow) + toLow
@@ -85,20 +87,6 @@ def updateCT(CT)
     warm = scale(CT,153,500,0,255)
 end
 
-def updateDimmer(Dimmer)
-    dimmer=Dimmer
-end
-
-def updateHUEDimmer(Dimmer)
-    HEUDimmer=Dimmer
-end
-
-def updateHUE(hue)
-    hsv_to_rgb( hue, 255, 255 )
-    updateLamp(r*HEUDimmer/255,g*HEUDimmer/255,b*HEUDimmer/255,cold*dimmer/255,warm*dimmer/255)
-end
-
-
 
 def LightControl(val)
     if controlLock
@@ -125,15 +113,15 @@ end
 
 def myDimmer(time)
     if (time<hora_minuto(1,00))
-        updateDimmer(204)
+        dimmer = 204
     elif (time>=hora_minuto(1,00) && time<=hora_minuto(2,30))
-        updateDimmer(scale(time,hora_minuto(1,00),hora_minuto(2,30),204,102))
+        dimmer = scale(time,hora_minuto(1,00),hora_minuto(2,30),204,102)
     elif (time>hora_minuto(2,30) && time<hora_minuto(5,00))
-        updateDimmer(102)
+        dimmer = 102
     elif (time>=hora_minuto(5,00) && time<=hora_minuto(6,00))
-        updateDimmer(scale(time,hora_minuto(5,00),hora_minuto(6,00),102,204))
+        dimmer = scale(time,hora_minuto(5,00),hora_minuto(6,00),102,204)
     else
-        updateDimmer(204)
+        dimmer = 204
     end
 end
 
@@ -141,15 +129,13 @@ end
 
 def myHUE(time)
     if (time<hora_minuto(2,00))
-        updateHUE(scale(time,hora_minuto(0,00),hora_minuto(2,00),240,35))
+        hsv_to_rgb( (scale(time,hora_minuto(0,00),hora_minuto(2,00),240,35)), 255, 255 )
     elif (time>=hora_minuto(2,00) && time<hora_minuto(9,15))
-        updateHUE(35)
+        hsv_to_rgb( 35, 255, 255 )
     else
-        updateHUE(240)
+        hsv_to_rgb( 240, 255, 255 )
     end
 end
-
-var times = 0
 
 def myAlarm()
     print("alarm",times)
@@ -158,8 +144,8 @@ def myAlarm()
     end
     controlLock=false
     if (times<=20)
-        updateHUEDimmer(scale(times,0,20,1,255))
-        updateHUE(38)
+        HEUDimmer = scale(times,0,20,1,255)
+        hsv_to_rgb( 38, 255, 255 )
         tasmota.set_power(0,true)
         tasmota.set_power(1,false)
         times = times + 1
@@ -168,11 +154,11 @@ def myAlarm()
         times = times + 1
         tasmota.set_timer(60000,myAlarm)
     else
-        updateHUE(240)
+        hsv_to_rgb( 240, 255, 255 )
         tasmota.set_power(0,false)
         controlLock=true
         times=0
-        updateHUEDimmer(255)
+        HEUDimmer = 255
     end
 end
 
@@ -185,17 +171,10 @@ def updateTime()
         myCT(minutes)
         myDimmer(minutes)
         myHUE(minutes)
+        updateLamp(r*(HEUDimmer/255),g*(HEUDimmer/255),b*(HEUDimmer/255),cold*(dimmer/255),warm*(dimmer/255))
     end
 end
 
-#tasmota.add_rule("analog#A2>2500",def(values) LightControl(true) end )
-#tasmota.add_rule("analog#A2<2500",def(values) LightControl(false) end )
-
-tasmota.add_rule("Time#Initialized", def(values) updateTime() end )
-tasmota.add_rule("Power1#State=1", def(values) updateTime() end )
-tasmota.add_rule("Time#Minute", def(values) updateTime() end )
-
-import json
 def timer()
     var sensors=json.load(tasmota.read_sensors())
     if sensors['ANALOG']['A2']<=2500
@@ -206,4 +185,9 @@ def timer()
     tasmota.set_timer(500,timer)
 end
 
-tasmota.add_cron("0 45 9 * * 2,4",myAlarm,"myAlarm")
+
+tasmota.add_rule("Time#Initialized", def(values) updateTime() end )
+tasmota.add_rule("Power1#State=1", def(values) updateTime() end )
+tasmota.add_rule("Time#Minute", def(values) updateTime() end )
+
+tasmota.add_cron("0 15 9 * * 2,4",myAlarm,"myAlarm")
