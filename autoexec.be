@@ -78,7 +78,7 @@ end
 
 def updateLamp(r,g,b,c,w)
     light.set({'rgb':string.format("%02x%02x%02x%02x%02x", r,g,b,c,w)})
-    print("R:",r,"G:",g,"B:",b, "Cold:",cold,"warm:",warm )
+    print("R:",r,"G:",g,"B:",b, "Cold:",c,"warm:",w )
 end
 
 
@@ -171,7 +171,7 @@ def updateTime()
         myCT(minutes)
         myDimmer(minutes)
         myHUE(minutes)
-        updateLamp(r*(HEUDimmer/255),g*(HEUDimmer/255),b*(HEUDimmer/255),cold*(dimmer/255),warm*(dimmer/255))
+        updateLamp(r*HEUDimmer/255,g*HEUDimmer/255,b*HEUDimmer/255,cold*dimmer/255,warm*dimmer/255)
     end
 end
 
@@ -185,6 +185,7 @@ def timer()
     tasmota.set_timer(500,timer)
 end
 
+timer()
 
 tasmota.add_rule("Time#Initialized", def(values) updateTime() end )
 tasmota.add_rule("Power1#State=1", def(values) updateTime() end )
