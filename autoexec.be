@@ -146,6 +146,7 @@ def myAlarm()
     if (times<=20)
         HEUDimmer = scale(times,0,20,1,255)
         hsv_to_rgb( 38, 255, 255 )
+        updateLamp(r*HEUDimmer/255,g*HEUDimmer/255,b*HEUDimmer/255,cold*dimmer/255,warm*dimmer/255)
         tasmota.set_power(0,true)
         tasmota.set_power(1,false)
         times = times + 1
